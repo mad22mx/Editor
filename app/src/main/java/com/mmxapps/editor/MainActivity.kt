@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,12 +30,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mmxapps.editor.ui.theme.EditorTheme
@@ -51,22 +53,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextEditorScreen() {
     var editorText by remember { mutableStateOf("") }
-    val initialText = editorText
-    val onTextChange: (String) -> Unit = { editorText = it }
-    var text by remember { mutableStateOf(initialText) }
-    //val lineCount = text.count { it == '\n' }
-    //val lineNoList = (0..lineCount).toList()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Simple Text Editor") },
                 actions = {
-                    IconButton(onClick = { /* New File */ }) {
+                    IconButton(onClick = { editorText = "" }) {
                         Icon(Icons.Default.Add, contentDescription = "New")
                     }
                     IconButton(onClick = { /* Open File */ }) {
@@ -79,78 +76,95 @@ fun TextEditorScreen() {
             )
         }
     ) { innerPadding ->
-        val lines = text.split('\n').toMutableList()
-        if (lines[lines.size-1].isEmpty() || lines[lines.size-1] == " ") lines[lines.size - 1] = " "
-        LazyColumn(
+        Row(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            items(lines.size) { lineNo ->
-
-                Row(modifier = Modifier.fillMaxSize()) {
-
-                    Box(
-                        modifier = Modifier
-                            .width(30.dp)
-                            .padding(2.dp),
-                        contentAlignment = Alignment.TopEnd
-
-                    ) {
+            // Line numbers column
+            val lines = editorText.split("\n")
+            Box(
+                modifier = Modifier
+                    .width(30.dp)
+                    .fillMaxHeight()
+            ) {
+                LazyColumn {
+                    items(lines.size) { index ->
+                        val nooflines = lines[index].length % 38
                         Text(
-                            text = (lineNo+1).toString(),
+                            text = (index + 1).toString(),
+                            modifier = Modifier
+                                .padding(end = 8.dp, top = 4.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.End,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             fontFamily = FontFamily.Monospace
                         )
-                    }
-
-                    BasicTextField(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 4.dp),
-                        value = lines[lineNo],
-                        onValueChange = {
-                            text = it
-                            onTextChange(text)
-                        },
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        decorationBox = { innerTextField ->
-                            Box(
+                        for (i in 1..nooflines) {
+                            Text(
+                                text = "",
                                 modifier = Modifier
-                            ) {
-                                if(text.isEmpty()) {
-                                    Text(
-                                        "Start typing...",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
-                            }
-                            innerTextField()
+                                    .padding(end = 8.dp, top = 4.dp)
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.End,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                fontFamily = FontFamily.Monospace
+                            )
                         }
-
-
-                    )
-
+                    }
                 }
             }
+
+            // Main text editor
+            BasicTextField(
+                value = editorText,
+                onValueChange = { newText ->
+                    editorText = newText
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                textStyle = TextStyle(
+                    color = Color(0xFFFFFFFF),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Monospace,
+                    lineHeight = 24.sp,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                    ) {
+                        if (editorText.isEmpty()) {
+                            Text(
+                                "Start typing...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
         }
+
         Row(
             horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
+            val lines = editorText.split("\n")
             Text(
-                text = "51:22",
-                modifier = Modifier.padding(8.dp),
+                text = "${lines.size}:${editorText.length}",
                 style = TextStyle(color = Color.Gray)
             )
         }
     }
-
 }
-
